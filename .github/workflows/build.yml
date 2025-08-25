@@ -20,8 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Do something"
-  docker_build_and_push_to_ecr:
-    name: "Docker build and push to ECR"
+  build_and_push_to_ecr:
+    name: "Build Docker image and Push to ECR"
     if: |
       github.ref_name == 'main'
     needs: lint_and_test
@@ -33,7 +33,18 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Build Docker image
         run: |
-          docker build -t aws-bootcamp:latest .
+          docker build -t aws-bootcamp-cicd:latest .
+      - name: "Configure AWS credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::295786672535:role/anada-camp20250825-role
+          aws-region: "ap-northeast-1"
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Push Docker image to ECR
+        run: |
+          docker tag aws-bootcamp-cicd:latest 295786672535.dkr.ecr.ap-northeast-1.amazonaws.com/anada-camp202507-repo:v1-anada:latest
+          docker push 295786672535.dkr.ecr.ap-northeast-1.amazonaws.com/anada-camp202507-repo:v1-anada:latest
   deploy:
     name: "Deploy to AWS ECS"
     runs-on: ubuntu-latest
